@@ -3,3 +3,13 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 public/fonts/game-paused-demo.otf
+
+# Android
+out/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
