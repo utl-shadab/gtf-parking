@@ -8,12 +8,16 @@ export interface ApkInfo {
   size: number;
 }
 
+/** Dispatch on window to reopen the install sheet, e.g. from the level screen's permanent button. */
+export const openInstallEvent = "parkline:open-install";
+
 const dismissedKey = "parkline:install-dismissed";
+const isAndroid = () => /Android/i.test(navigator.userAgent);
 const remindAfter = 7 * 24 * 60 * 60 * 1000;
 
 function shouldOffer() {
   // APKs only install on Android; iPhone and desktop visitors never see the offer.
-  if (!/Android/i.test(navigator.userAgent)) return false;
+  if (!isAndroid()) return false;
   try {
     const dismissed = Number(localStorage.getItem(dismissedKey));
     return !dismissed || Date.now() - dismissed > remindAfter;
@@ -33,13 +37,25 @@ export function InstallPrompt({ apk }: { apk: ApkInfo }) {
   }, [step]);
 
   useEffect(() => {
-    if (!shouldOffer()) return;
-    const timer = window.setTimeout(() => {
-      sheet.current?.showModal();
+    if (!isAndroid()) return;
+    function open() {
+      const element = sheet.current;
+      if (!element || element.open) return;
+      setStep("offer");
+      element.showModal();
       // Focus the sheet, not its first button: screen readers announce the title, and no focus ring flashes on load.
-      sheet.current?.focus();
-    }, 900);
-    return () => window.clearTimeout(timer);
+      element.focus();
+    }
+    // Reveals the permanent "Get the Android app" button (hidden by CSS everywhere else).
+    const root = document.documentElement;
+    root.dataset.installable = "true";
+    window.addEventListener(openInstallEvent, open);
+    const timer = shouldOffer() ? window.setTimeout(open, 900) : undefined;
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(openInstallEvent, open);
+      delete root.dataset.installable;
+    };
   }, []);
 
   function dismiss() {

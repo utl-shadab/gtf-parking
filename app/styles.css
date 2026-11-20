@@ -277,6 +277,10 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; min-height: 20
 /* Inside the Android app the window is always full screen. */
 :root[data-native] .fullscreen-button { display: none; }
 
+/* Permanent way back to the Android app offer; only shown in Android browsers once the APK exists. */
+.install-entry { display: none; }
+:root[data-installable] .install-entry { display: flex; width: 100%; margin-top: 14px; }
+
 /* Android app offer: a bottom sheet within thumb reach, built from the pause dialog tokens. */
 .install-sheet { width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto auto calc(12px + env(safe-area-inset-bottom)); padding: 20px; border: 1px solid #886d4d; border-radius: 16px; background: var(--panel); color: var(--ink); box-shadow: 0 24px 65px #0b0604b0; overflow: auto; overscroll-behavior: contain; }
 .install-sheet[open] { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 14px 16px; animation: install-rise 260ms cubic-bezier(.2, .8, .2, 1); }

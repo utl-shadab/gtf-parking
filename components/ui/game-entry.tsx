@@ -1,5 +1,6 @@
 import type { ReactNode, Ref } from "react";
 import { Icon } from "./icon";
+import { openInstallEvent } from "./install-prompt";
 
 export interface EntryTrial {
   index: number;
@@ -68,6 +69,9 @@ export function GameEntry({
           <button className="utility-button" type="button" aria-label="Next page of trials" disabled={page >= lastPage}
             onClick={() => onPage(page + 1)}><Icon name="right" size={16} /></button>
         </nav>}
+        <button type="button" className="utility-button install-entry" onClick={() => window.dispatchEvent(new Event(openInstallEvent))}>
+          <Icon name="download" size={18} /> Get the Android app
+        </button>
       </section>
     </section>
   );
