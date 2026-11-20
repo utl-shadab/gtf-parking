@@ -1,0 +1,81 @@
+Parkline asset credits
+
+The playable Thar-style 4x4 and GT Sports Coupé are original Parkline
+models made from the supplied vehicle references. Roof, body paint,
+interior and wheels are separate parts for customization and animation.
+
+NVIDIA, SimReady Assets, CC BY 4.0
+https://huggingface.co/datasets/nvidia/simready-assets
+https://creativecommons.org/licenses/by/4.0/
+
+Source packages: environment_floor_a01, barrier_wall_plastic_orange_a03,
+structure_wall_straight_a01.
+Changes: converted OpenUSD geometry to GLB, simplified geometry, cropped
+the barrier to its base, reprojected UVs, optimized the source textures,
+and rescaled the models for the original lot.
+
+Kenney, City Kit (Suburban) and Interface Sounds, CC0 1.0
+https://kenney.nl/assets/city-kit-suburban
+https://kenney.nl/assets/interface-sounds
+https://creativecommons.org/publicdomain/zero/1.0/
+Interface cues were converted to MP3 for browser playback.
+
+Rico Cilliers / Poly Haven, Tree Small 02, CC0 1.0
+https://polyhaven.com/a/tree_small_02
+Changes: simplified trunk and branches, baked the leaf sprigs into a
+cutout texture atlas, and fitted scale and rotation to the parking verge.
+
+tevy, Five-Door Hatchback, Mid-Size SUV, and Family Sedan, CC0 1.0
+https://tevy.dev/models/hatchback
+https://tevy.dev/models/suv
+https://tevy.dev/models/family-sedan
+Changes: fitted vehicle scale and adjusted paint and glazing at runtime.
+
+tevy, Office Facade Module and Storefront Base Module, CC0 1.0
+https://tevy.dev/models/facade-office-module
+https://tevy.dev/models/storefront-module
+
+Amal Kumar / Poly Haven, Worn Asphalt, CC0 1.0
+https://polyhaven.com/a/worn_asphalt
+Changes: resized the maps, reduced the diffuse saturation, and encoded the
+diffuse and OpenGL normal textures as WebP.
+
+Amal Kumar / Poly Haven, Sparse Grass, CC0 1.0
+https://polyhaven.com/a/sparse_grass
+Changes: color-graded the grass for the parking lot and encoded as WebP.
+
+Rob Tuytel / Poly Haven, Cobblestone Floor 001, CC0 1.0
+https://polyhaven.com/a/cobblestone_floor_001
+Changes: resized and encoded ground maps as WebP.
+
+looneybits, Car engine start 01, CC0 1.0
+https://opengameart.org/content/car-engine-start-01
+
+domasx2, racing car engine sound loops, CC0 1.0
+https://opengameart.org/content/racing-car-engine-sound-loops
+Changes: playback rate and volume change to follow vehicle speed and throttle.
+The native mobile track was level-adjusted and encoded as MP3.
+
+qubodup, Clank Car Crash Collision, CC0 1.0
+https://freesound.org/people/qubodup/sounds/151624/
+
+audible-edge (Tom Haigh), Car tire squeal skid loop, CC BY 3.0
+https://opengameart.org/content/car-tire-squeal-skid-loop
+https://creativecommons.org/licenses/by/3.0/
+Changes: shortened, faded, and converted to MP3.
+
+Felix Blume, Parking lot ambience behind City Hall, CC0 1.0
+https://freesound.org/people/felix.blume/sounds/689711/
+Changes: excerpted, faded, and converted to mono MP3 for the ambient loop.
+
+Lilita One by Juan Montoreano, SIL Open Font License 1.1
+https://fonts.google.com/specimen/Lilita+One
+The license is included in fonts/Lilita-One-OFL.txt.
+
+The layouts, markings and interface were built for Parkline.
+
+Different Cars Pack by NextLevelModels, CC BY 4.0
+https://sketchfab.com/3d-models/different-cars-pack-7ef58c3a2b9946dcb4ff042bdbac6a17
+https://sketchfab.com/vanshtandon321
+https://creativecommons.org/licenses/by/4.0/
+Changes: all 33 models extracted, centered, rigged for driving, simplified and compressed, with their original textures resized for the web.
