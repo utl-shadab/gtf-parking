@@ -31,7 +31,7 @@ export function GameEntry({
       <div className="entry-intro">
         <header>
           <div className="brand">
-            <span className="brand-icon"><Icon name="parking" size={28} /></span>
+            <img className="brand-icon" src="/parkline-mark.svg" width={48} height={48} alt="" />
             <h1 id="entry-title" ref={titleRef} tabIndex={-1} translate="no">Parkline</h1>
           </div>
           <p className="header-caption">3D parking trials</p>

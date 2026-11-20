@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch screen before Android 12: the badge centred on the game's night background. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/parkline_night"/>
+    <item android:width="148dp" android:height="148dp" android:gravity="center" android:drawable="@drawable/ic_parkline_badge"/>
+</layer-list>

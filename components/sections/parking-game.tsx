@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { App } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import type { Action, CameraMode, Gear, Level } from "@/types/game";
 import { activeBay, advanceDrive, createDriveState } from "@/lib/utils/driving";
 import type { DriveState } from "@/lib/utils/driving";
@@ -148,6 +150,29 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
     const { cars, active } = garageRef.current;
     setVehicle(cars[active]);
   }
+
+  // Android back button: close the top dialog, otherwise step back through the game's own screens.
+  const backButton = useRef<() => void>(() => {});
+  backButton.current = () => {
+    const open = [...document.querySelectorAll<HTMLDialogElement>("dialog[open]")].filter((element) => element !== dialog.current);
+    if (open.length) {
+      open[open.length - 1].close();
+      return;
+    }
+    const current = overlayRef.current;
+    if (current === "levels") {
+      if (started) dismissLevels();
+      else void App.minimizeApp();
+    } else if (current === null) showOverlay("pause");
+    else if (current === "pause") showOverlay(null);
+    else showOverlay("levels");
+  };
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const listener = App.addListener("backButton", () => backButton.current());
+    return () => { void listener.then((handle) => handle.remove()); };
+  }, []);
 
   function dismissLevels() {
     applyGarage();
@@ -544,7 +569,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
               <button type="button" className="hud-button" onClick={toggleRearView} aria-label="Rear view" aria-pressed={camera === "Rear"} title="Rear view (V)" disabled={!ready}><Icon name="rear" /></button>
               <button type="button" className="hud-button" onClick={() => showOverlay("pause")} aria-label="Pause game" disabled={!ready}><Icon name="pause" /></button>
             </>}
-            <button className="hud-button" type="button" aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            <button className="hud-button fullscreen-button" type="button" aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               title={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} onClick={() => void toggleFullscreen()}>
               <Icon name={fullscreen ? "collapse" : "expand"} />
             </button>

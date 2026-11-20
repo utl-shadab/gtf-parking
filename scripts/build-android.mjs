@@ -21,8 +21,9 @@ if (!existsSync(join(root, "android"))) run("npx cap add android");
 run("npx cap sync android");
 
 console.log(`\n> Gradle ${release ? "release" : "debug"} build`);
-const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-run(`${gradlew} ${release ? "assembleRelease" : "assembleDebug"}`, { cwd: join(root, "android") });
+// Full path: Windows shells may be set to never run programs from the current directory.
+const gradlew = join(root, "android", process.platform === "win32" ? "gradlew.bat" : "gradlew");
+run(`"${gradlew}" ${release ? "assembleRelease" : "assembleDebug"}`, { cwd: join(root, "android") });
 
 const variant = release ? "release" : "debug";
 const apk = join(root, "android", "app", "build", "outputs", "apk", variant, `app-${variant}.apk`);

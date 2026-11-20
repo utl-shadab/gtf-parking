@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type IconName = "parking" | "camera" | "rear" | "pause" | "reset" | "back" | "right" | "left" | "levels" | "play" | "expand" | "collapse" | "sound" | "muted" | "lock" | "more" | "close";
+type IconName = "parking" | "camera" | "rear" | "pause" | "reset" | "back" | "right" | "left" | "levels" | "play" | "expand" | "collapse" | "sound" | "muted" | "lock" | "more" | "close" | "download";
 
 const icons: Record<IconName, ReactNode> = {
   parking: <path d="M8 18V6h5a3.5 3.5 0 0 1 0 7H8" />,
@@ -20,6 +20,7 @@ const icons: Record<IconName, ReactNode> = {
   lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
   more: <path d="M5 12h.01m6.99 0h.01m6.99 0h.01" strokeWidth="3" />,
   close: <path d="m6 6 12 12M18 6 6 18" />,
+  download: <path d="M12 4v11m-5-5 5 5 5-5M5 20h14" />,
 };
 
 export function Icon({ name, size = 21 }: { name: IconName; size?: number }) {
