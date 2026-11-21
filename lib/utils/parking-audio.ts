@@ -6,6 +6,7 @@ const sounds = {
   brake: ["brake.mp3", 0.54],
   crash: ["crash.mp3", 0.92],
   shift: ["shift.mp3", 0.42],
+  honk: ["city-horn.wav", 0.28],
   success: ["success.mp3", 0.56],
 } as const;
 
@@ -120,6 +121,7 @@ export class ParkingAudio {
   private enabled = true;
   private ignited = false;
   private running = false;
+  private engineRunning = false;
   private braking = false;
   private revision = 0;
   private loopRevision = 0;
@@ -243,20 +245,22 @@ export class ParkingAudio {
     this.sync(0, true, true);
   }
 
-  sync(speed: number, throttle: boolean, active: boolean) {
-    if (!this.ignited || !this.enabled || !active) {
+  sync(speed: number, throttle: boolean, active: boolean, engine = true) {
+    if (!this.enabled || !active || engine && !this.ignited) {
       this.suspend();
       return;
     }
+    if (this.running && engine !== this.engineRunning) this.suspend();
     this.speed = speed;
     this.throttle = throttle;
     if (!this.running) {
       this.running = true;
-      this.play("engine", "engine");
+      this.engineRunning = engine;
+      if (engine) this.play("engine", "engine");
       this.play("ambience", "ambience");
     }
-    const engine = this.loops.get("engine");
-    if (engine) this.updateEngine(engine);
+    const voice = this.loops.get("engine");
+    if (voice) this.updateEngine(voice);
     this.media?.tune(0.76 + Math.min(Math.abs(speed) / 5.35, 1) * 0.72 + (throttle ? 0.14 : 0));
   }
 

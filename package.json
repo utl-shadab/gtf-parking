@@ -2,7 +2,7 @@
   "name": "parkline",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/driving.test.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/*.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

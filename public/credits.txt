@@ -74,8 +74,40 @@ The license is included in fonts/Lilita-One-OFL.txt.
 
 The layouts, markings and interface were built for Parkline.
 
+Open City is an original Parkline map modeled in Blender. Its geometry
+and materials were authored for Parkline with the CLI-Anything Blender harness.
+https://github.com/HKUDS/CLI-Anything/tree/main/blender/agent-harness
+The Bay Shuttle bus, Bay Line train and city horn were created for Parkline.
+City traffic reuses the existing Parkline garage vehicles.
+
+MIKESTEEZ, JINU, CC BY 4.0
+https://sketchfab.com/3d-models/jinu-347628ff9eed4b6bb73f8fa027854472
+https://sketchfab.com/mikesteez.mm.mm
+https://creativecommons.org/licenses/by/4.0/
+Changes: resized and encoded textures as WebP, scaled the model in-game,
+retargeted the Vinish Casual Man idle, walk and run clips to its original
+rig, and animated seating, swimming, and vehicle transfers in-game.
+
+Vinish, Rigged People, CC BY 4.0
+https://vinish.dev/free-3d-models/people
+https://creativecommons.org/licenses/by/4.0/
+City pedestrians use Casual Man, Casual Woman, Business Man, and
+Business Woman with their original idle, walk and run animations.
+
+Poly Haven, City surface textures, CC0 1.0
+https://polyhaven.com/a/brick_wall_09
+https://polyhaven.com/a/grey_roof_tiles_02
+https://polyhaven.com/a/rock_face_03
+https://polyhaven.com/a/coast_sand_02
+https://creativecommons.org/publicdomain/zero/1.0/
+Changes: resized the color and OpenGL normal maps and encoded them as WebP.
+
+Google Draco decoder, Apache License 2.0
+https://github.com/google/draco
+The license text is included in basis/Apache-License-2.0.txt.
+
 Different Cars Pack by NextLevelModels, CC BY 4.0
 https://sketchfab.com/3d-models/different-cars-pack-7ef58c3a2b9946dcb4ff042bdbac6a17
 https://sketchfab.com/vanshtandon321
 https://creativecommons.org/licenses/by/4.0/
-Changes: all 33 models extracted, centered, rigged for driving, simplified and compressed, with their original textures resized for the web.
+Changes: all 33 models extracted, centered, rigged for driving and opening panels, simplified and compressed, with their original textures resized for the web.

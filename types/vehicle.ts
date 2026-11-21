@@ -9,6 +9,13 @@ export const vehicleIds = [
 ] as const;
 export type VehicleId = typeof vehicleIds[number];
 
+export type CityPanel = "door" | "passengerDoor" | "rearDoors" | "trunk";
+export const cityPanels: readonly CityPanel[] = ["door", "passengerDoor", "trunk", "rearDoors"];
+
+export function isCityPanel(value: string): value is CityPanel {
+  return cityPanels.some((panel) => panel === value);
+}
+
 export interface VehicleSelection {
   id: VehicleId;
   color: string;

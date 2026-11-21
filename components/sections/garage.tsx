@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
+import { CarCatalog } from "@/components/ui/car-catalog";
 import { vehicles } from "@/lib/utils/garage";
 import { vehicleIds, type VehicleId, type VehicleSelection } from "@/types/vehicle";
 
@@ -19,7 +19,6 @@ export function Garage({ vehicle, onSelect, onCustomize }: GarageProps) {
   const host = useRef<HTMLDivElement>(null);
   const drag = useRef<number | null>(null);
   const catalog = useRef<HTMLDialogElement>(null);
-  const [search, setSearch] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [loadStatus, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadedId, setLoadedId] = useState<VehicleId | null>(null);
@@ -27,7 +26,6 @@ export function Garage({ vehicle, onSelect, onCustomize }: GarageProps) {
   const id = vehicle.id;
   const model = vehicles[id];
   const index = vehicleIds.indexOf(id);
-  const matches = vehicleIds.filter((choice) => vehicles[choice].name.toLowerCase().includes(search.trim().toLowerCase()));
   const status = loadStatus === "ready" && loadedId !== id ? "loading" : loadStatus;
 
   useEffect(() => {
@@ -102,24 +100,7 @@ export function Garage({ vehicle, onSelect, onCustomize }: GarageProps) {
         <button type="button" className="hud-button" aria-label="Next car"
           onClick={() => onSelect(vehicleIds[(index + 1) % vehicleIds.length])}><Icon name="right" size={17} /></button>
       </div>
-      <dialog ref={catalog} className="garage-catalog" aria-labelledby="garage-catalog-title" onClose={() => setSearch("")}>
-        <div className="garage-catalog-heading">
-          <h3 id="garage-catalog-title">Choose a car</h3>
-          <button type="button" className="hud-button" aria-label="Close car list" onClick={() => catalog.current?.close()}>×</button>
-        </div>
-        <input className="garage-search" aria-label="Search cars" type="search" value={search}
-          placeholder="Search cars" onChange={(event) => setSearch(event.currentTarget.value)} />
-        <div className="garage-grid">
-          {matches.map((choice) => (
-            <button key={choice} type="button" data-car={choice} className="garage-card" aria-pressed={choice === id}
-              onClick={() => { onSelect(choice); catalog.current?.close(); }}>
-              <Image src={`/garage-thumbnails/${choice}.webp`} width={320} height={152} alt="" unoptimized draggable={false} />
-              <span>{vehicles[choice].name}</span>
-            </button>
-          ))}
-          {matches.length === 0 && <p role="status">No cars found</p>}
-        </div>
-      </dialog>
+      <CarCatalog dialog={catalog} selected={id} onSelect={onSelect} />
       {(model.paint || model.roof !== undefined) && <div className="garage-options">
         {model.paint && <label className="garage-color">
           <input type="color" value={vehicle.color} onChange={(event) => onCustomize({ color: event.currentTarget.value })} />

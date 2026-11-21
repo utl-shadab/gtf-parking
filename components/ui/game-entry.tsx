@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import { Icon } from "./icon";
 import { openInstallEvent } from "./install-prompt";
+import { cityDistricts, type cityProgress } from "@/lib/utils/city-progress";
 
 export interface EntryTrial {
   index: number;
@@ -19,13 +20,15 @@ interface GameEntryProps {
   lastUnlocked: number;
   page: number;
   lastPage: number;
+  city: ReturnType<typeof cityProgress>;
+  onCity: () => void;
   onSelect: (index: number) => void;
   onPage: (page: number) => void;
   onBack: () => void;
 }
 
 export function GameEntry({
-  titleRef, garage, trials, cleared, activeIndex, lastUnlocked, page, lastPage, onSelect, onPage, onBack,
+  titleRef, garage, trials, cleared, activeIndex, lastUnlocked, page, lastPage, city, onCity, onSelect, onPage, onBack,
 }: GameEntryProps) {
   return (
     <section className="game-entry" aria-labelledby="entry-title">
@@ -37,6 +40,15 @@ export function GameEntry({
           </div>
           <p className="header-caption">3D parking trials</p>
         </header>
+        <button type="button" className="city-card" onClick={onCity}>
+          <span>
+            <strong>Open City</strong>
+            <small>{city.unlocked === 0 ? "Free roam"
+              : city.unlocked < cityDistricts.length ? city.completed + "/10 to " + cityDistricts[city.unlocked]
+              : "All districts unlocked"}</small>
+          </span>
+          <Icon name="right" />
+        </button>
         {garage}
       </div>
       <section className="entry-trials" aria-labelledby="entry-levels">

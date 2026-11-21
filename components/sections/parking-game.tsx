@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { Action, CameraMode, Gear, Level } from "@/types/game";
 import { activeBay, advanceDrive, createDriveState } from "@/lib/utils/driving";
 import type { DriveState } from "@/lib/utils/driving";
 import { DriveControls } from "@/components/ui/drive-controls";
+import { CityLoading } from "@/components/ui/city-loading";
 import { GameEntry } from "@/components/ui/game-entry";
 import { GameHelp } from "@/components/ui/game-help";
 import { Icon } from "@/components/ui/icon";
@@ -15,13 +16,14 @@ import { ParkingAudio } from "@/lib/utils/parking-audio";
 import { createEndlessTrial } from "@/lib/utils/endless-trials";
 import { defaultGarage, garageKey, readGarage } from "@/lib/utils/garage";
 import type { GarageState, VehicleSelection } from "@/types/vehicle";
+import { cityDistricts, cityProgress } from "@/lib/utils/city-progress";
+import { driveStep, movementKeys, readDriveInput } from "@/lib/utils/drive-controls";
 
+const CityGame = lazy(() => import("./city-game"));
 const cameras: CameraMode[] = ["Overview", "Chase", "Overhead", "Cabin"];
-const step = 1 / 120;
 const progressKey = "parkline-ratings-v1";
 const endlessProgressKey = "parkline-endless-v1";
 const audioKey = "parkline-sound";
-const movementKeys = new Set(["KeyW", "KeyS", "KeyA", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"]);
 type Overlay = "levels" | "pause" | "parked" | "failed" | null;
 const impactNames = { wall: "Wall", car: "Parked car", barrier: "Barrier" } as const;
 
@@ -74,6 +76,11 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
   const [immersive, setImmersive] = useState(false);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [endlessCleared, setEndlessCleared] = useState(0);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [cityUnlock, setCityUnlock] = useState(0);
+  const cityActive = useRef(false);
+  const garageChoice = useRef(false);
+  const [cityVehicle, setCityVehicle] = useState<VehicleSelection>();
   const [garage, setGarage] = useState(defaultGarage);
   const garageRef = useRef(garage);
   const [vehicle, setVehicle] = useState<VehicleSelection>(defaultGarage.cars.thar);
@@ -83,6 +90,8 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
   const introUnlocked = levels.findLastIndex((trial) => Boolean(ratings[trial.id])) + 1;
   const lastUnlocked = introUnlocked === levels.length ? levels.length + endlessCleared : introUnlocked;
   const cleared = levels.filter((trial) => Boolean(ratings[trial.id])).length + endlessCleared;
+  const finalTrial = levels[levels.length - 1].id;
+  const city = cityProgress(levels.length, cleared - endlessCleared, Boolean(ratings[finalTrial]), endlessCleared);
   const pageStart = trialPage * levels.length;
   const lastPage = Math.floor(lastUnlocked / levels.length);
   const [view, setView] = useState(() => createDriveState(level.start));
@@ -125,6 +134,21 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
     setGear(next);
   }
 
+  function enterCity() {
+    const { active, cars } = garageRef.current;
+    setCityVehicle(garageChoice.current ? cars[active] : undefined);
+    garageChoice.current = false;
+    audio.current?.reset();
+    showOverlay("levels");
+    cityActive.current = true;
+    setCityOpen(true);
+  }
+
+  const exitCity = useCallback(() => {
+    cityActive.current = false;
+    setCityOpen(false);
+  }, []);
+
   function chooseNextCamera() {
     const next = cameraRef.current === "Rear" ? previousView.current
       : cameras[(cameras.indexOf(cameraRef.current) + 1) % cameras.length];
@@ -154,6 +178,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
   // Android back button: close the top dialog, otherwise step back through the game's own screens.
   const backButton = useRef<() => void>(() => {});
   backButton.current = () => {
+    if (cityActive.current) return;
     const open = [...document.querySelectorAll<HTMLDialogElement>("dialog[open]")].filter((element) => element !== dialog.current);
     if (open.length) {
       open[open.length - 1].close();
@@ -185,6 +210,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
     const newLevel = index === levelIndex ? level : levels[index]
       ?? (next?.index === index ? next.level : createEndlessTrial(levels, index + 1).level);
     applyGarage();
+    setCityUnlock(0);
     setStarted(true);
     drive.current = createDriveState(newLevel.start);
     hadInput.current = false;
@@ -227,7 +253,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
 
   useEffect(() => {
     const host = canvasHost.current;
-    if (!host) return;
+    if (!host || cityOpen) return;
     running.current = false;
     setStatus("loading");
     const abort = new AbortController();
@@ -250,14 +276,8 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
         return;
       }
 
-      const { keys, buttons, wheel } = control.current;
-      const left = keys.has("KeyA") || keys.has("ArrowLeft") || buttons.has("left");
-      const right = keys.has("KeyD") || keys.has("ArrowRight") || buttons.has("right");
-      const forward = keys.has("KeyW") || keys.has("ArrowUp");
-      const backward = keys.has("KeyS") || keys.has("ArrowDown");
-      const accelerating = forward || backward || buttons.has("pedal");
-      const braking = keys.has("Space") || buttons.has("brake");
-      const steering = wheel ?? Number(right) - Number(left);
+      const input = readDriveInput(control.current, gearRef.current);
+      const { throttle: accelerating, brake: braking, steering } = input;
       if (accelerating) hadInput.current = true;
 
       const state = drive.current;
@@ -265,14 +285,9 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
       if (hadInput.current && !overlayRef.current && !state.result) {
         audio.current?.brake(braking, state.speed);
         frameDebt += dt;
-        while (frameDebt >= step) {
-          advanceDrive(state, {
-            steering,
-            brake: braking,
-            throttle: accelerating,
-            gear: backward && gearRef.current === "D" ? "R" : gearRef.current,
-          }, level, step, 0, vehicle.id);
-          frameDebt -= step;
+        while (frameDebt >= driveStep) {
+          advanceDrive(state, input, level, driveStep, 0, vehicle.id);
+          frameDebt -= driveStep;
         }
       } else {
         frameDebt = 0;
@@ -281,7 +296,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
 
       const mode = cameraRef.current;
       const hasImpact = Boolean(state.impactAt);
-      const steeringActive = !state.result && (Math.abs(state.steering) > 0.005 || wheel !== null);
+      const steeringActive = !state.result && (Math.abs(state.steering) > 0.005 || control.current.wheel !== null);
       if (mode !== previousCamera || Math.abs(state.speed) > 0.001 || steeringActive) {
         renderUntil = now + 520;
         previousCamera = mode;
@@ -306,6 +321,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
         showOverlay(state.result);
         audio.current?.cue(state.result === "parked" ? "success" : "crash");
         if (state.result === "parked" && levelIndex < levels.length) {
+          if (level.id === finalTrial && !ratingsRef.current[finalTrial]) setCityUnlock(1);
           const best = { ...ratingsRef.current, [level.id]: 3 };
           ratingsRef.current = best;
           setRatings(best);
@@ -313,6 +329,9 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
         } else if (state.result === "parked") {
           const advanced = levelIndex - levels.length + 1;
           if (advanced > endlessProgress.current) {
+            const before = cityProgress(levels.length, levels.length, true, endlessProgress.current).unlocked;
+            const after = cityProgress(levels.length, levels.length, true, advanced).unlocked;
+            if (after > before) setCityUnlock(after);
             endlessProgress.current = advanced;
             setEndlessCleared(advanced);
             try { localStorage.setItem(endlessProgressKey, String(advanced)); } catch { /* Storage may be unavailable. */ }
@@ -344,12 +363,12 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
       scene?.dispose();
       clearInputs();
     };
-  }, [level, revision, started, vehicle]);
+  }, [level, revision, started, vehicle, cityOpen]);
 
   useEffect(() => {
     function keyDown(event: globalThis.KeyboardEvent) {
       const { code } = event;
-      if (!running.current || helpDialog.current?.open || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (cityActive.current || !running.current || helpDialog.current?.open || event.ctrlKey || event.metaKey || event.altKey) return;
       if (overlayRef.current === "levels") {
         if (code === "Escape" && !event.repeat) {
           event.preventDefault();
@@ -454,9 +473,9 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
     const modal = overlay === "pause" || overlay === "parked";
     if (modal && !element?.open) element?.showModal();
     if (!modal && element?.open) element.close();
-    if (overlay === "levels" && started) entryTitle.current?.focus({ preventScroll: true });
+    if (overlay === "levels" && (started || city.unlocked) && !cityOpen) entryTitle.current?.focus({ preventScroll: true });
     if (overlay === null) playfield.current?.focus({ preventScroll: true });
-  }, [overlay, started]);
+  }, [overlay, started, cityOpen, city.unlocked]);
 
   useEffect(() => {
     const next = levelIndex + 1;
@@ -471,7 +490,7 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
   const driveEnabled = ready && !overlay;
   const reviewingImpact = Boolean(view.impactAt);
   const fullscreen = nativeFullscreen || immersive;
-  const entryOpen = overlay === "levels";
+  const entryOpen = overlay === "levels" && !cityOpen;
   const soundLabel = !soundEnabled ? "Unmute sound" : soundReady ? "Mute sound" : "Enable sound";
   const stopCount = (level.stops?.length ?? 0) + 1;
   const bay = activeBay(level, view.stopIndex);
@@ -509,11 +528,15 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
       {entryOpen && (
         <GameEntry titleRef={entryTitle} cleared={cleared} activeIndex={started ? levelIndex : null}
           lastUnlocked={lastUnlocked} page={trialPage} lastPage={lastPage} onSelect={changeLevel}
-          onPage={setTrialPage} onBack={dismissLevels}
+          onPage={setTrialPage} onBack={dismissLevels} city={city} onCity={enterCity}
           garage={<Garage vehicle={garage.cars[garage.active]}
-            onSelect={(active) => saveGarage({ ...garageRef.current, active })}
+            onSelect={(active) => {
+              garageChoice.current = true;
+              saveGarage({ ...garageRef.current, active });
+            }}
             onCustomize={(changes) => {
               const { cars, active } = garageRef.current;
+              garageChoice.current = true;
               saveGarage({ active, cars: { ...cars, [active]: { ...cars[active], ...changes } } });
             }}
           />}
@@ -534,7 +557,11 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
         <button type="button" className="hud-button entry-more" aria-label="More options" aria-haspopup="dialog"
           aria-controls="game-help" title="Keyboard shortcuts and credits" onClick={openHelp}><Icon name="more" /></button>
       )}
-      {started && <div className="viewport" ref={playfield} tabIndex={-1} hidden={entryOpen} role="group"
+      {cityOpen && <Suspense fallback={<CityLoading />}>
+        <CityGame unlocked={Math.max(1, city.unlocked)} garage={garage} startVehicle={cityVehicle} audio={audio}
+          soundEnabled={soundEnabled} soundLabel={soundLabel} onSound={toggleSound} onExit={exitCity} />
+      </Suspense>}
+      {started && <div className="viewport" ref={playfield} tabIndex={-1} hidden={entryOpen || cityOpen} role="group"
         data-camera={reviewingImpact ? "Impact" : camera} data-impact={view.impact ?? undefined}
         aria-label={reviewingImpact && view.impact ? `Impact camera. ${impactNames[view.impact]} collision.`
           : `${camera === "Rear" ? "Rear camera" : "3D parking lot"}. Target bay ${bay.id}. ${objective}`}>
@@ -621,11 +648,13 @@ export function ParkingGame({ levels }: { levels: Level[] }) {
         )}
         {overlay === "parked" && (
           <>
-            <h2 id="dialog-title">Parked cleanly</h2>
+            <h2 id="dialog-title">{cityUnlock === 1 ? "Endless trials unlocked" : cityUnlock ? cityDistricts[cityUnlock - 1] + " unlocked" : "Parked cleanly"}</h2>
             <div className="result-summary"><p className="result-stars" aria-label="3 of 3 stars">★★★</p><span>{formatTime(view.elapsed)}</span></div>
+            {cityUnlock > 0 && <p>{cityUnlock === 1 ? "Clear 10 endless trials to unlock Harbour fast travel." : "A new fast-travel destination is available."}</p>}
             {levelIndex === levels.length - 1 && <p>Endless trials unlocked.</p>}
             <div className="dialog-actions">
-              <button type="button" className="primary" onClick={() => changeLevel(levelIndex + 1)}>Next trial <Icon name="right" /></button>
+              {cityUnlock > 0 && <button type="button" className="primary" onClick={enterCity}>Enter Open City <Icon name="right" /></button>}
+              <button type="button" className={cityUnlock ? "utility-button" : "primary"} onClick={() => changeLevel(levelIndex + 1)}>Next trial <Icon name="right" /></button>
               <button type="button" className="utility-button" onClick={restart}><Icon name="reset" /> Retry</button>
               <button type="button" className="utility-button" onClick={() => showOverlay("levels")}><Icon name="levels" /> Levels</button>
             </div>

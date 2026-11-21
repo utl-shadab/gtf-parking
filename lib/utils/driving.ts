@@ -158,13 +158,20 @@ function fitsBay(car: Footprint, bay: Level["bay"], outline: Outline) {
   });
 }
 
-export function advanceDrive(state: DriveState, input: DriveInput, level: Level, dt: number, clearance = 0, vehicle: VehicleId | "both" = "gt") {
+export interface FreeDriveArea {
+  blocked: (x: number, z: number) => boolean;
+  speedLimit: number;
+  body?: { width: number; length: number };
+}
+
+export function advanceDrive(state: DriveState, input: DriveInput, level: Level | FreeDriveArea, dt: number, clearance = 0, vehicle: VehicleId | "both" = "gt") {
   if (state.result) return;
   state.elapsed += dt;
   const bodyOutline = vehicle === "both" ? validationOutline
     : vehicle === "thar" || vehicle === "gt" ? vehicleOutlines[vehicle] : rosterFootprints[vehicle].outline;
 
-  const topSpeed = input.gear === "D" ? 5.35 : input.gear === "R" ? -3.1 : 0;
+  const freeDrive = "blocked" in level ? level : undefined;
+  const topSpeed = input.gear === "D" ? freeDrive?.speedLimit ?? 5.35 : input.gear === "R" ? -3.1 : 0;
   const target = input.throttle && !input.brake ? topSpeed : 0;
   const rate = input.brake || input.gear === "P" ? 13.5
     : target === 0 ? 2.7
@@ -183,6 +190,17 @@ export function advanceDrive(state: DriveState, input: DriveInput, level: Level,
   };
 
   const moving = Math.abs(state.speed) > 0.001;
+  if ("blocked" in level) {
+    if (!moving) return;
+    if (footprint({ ...car, ...level.body }, level.body ? rectangle : bodyOutline).some(({ x, z }) => level.blocked(x, z))) {
+      state.speed = 0;
+      return;
+    }
+    state.x = car.x;
+    state.z = car.z;
+    state.yaw = yaw;
+    return;
+  }
   if (moving) {
     const halfWidth = (level.lot?.width ?? LOT_WIDTH) / 2;
     const halfLength = (level.lot?.length ?? LOT_LENGTH) / 2;

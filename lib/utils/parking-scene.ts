@@ -10,6 +10,8 @@ import { createCabinCameras, rearDisplayLayer } from "./cabin-cameras";
 import { vehicles } from "./garage";
 import { findRoadLettering } from "./road-lettering";
 import { buildPlayerVehicle, loadCarAsset, loadPlayerVehicle } from "./player-vehicle";
+import { createVehicleWheels } from "./vehicle-wheels";
+import { loadStreetTree } from "./street-tree";
 
 const files = {
   "parking-floor": "parking-floor", barrier: "barrier", wall: "wall",
@@ -52,7 +54,7 @@ function loadModels(renderer: THREE.WebGLRenderer) {
   const loader = new GLTFLoader().setKTX2Loader(textures).setMeshoptDecoder(MeshoptDecoder);
   modelRequest = Promise.all((Object.keys(files) as ModelName[]).map(async (name) => {
     const path = files[name];
-    const asset = path.startsWith("car/") ? loadCarAsset(path.slice(4), renderer)
+    const asset = name === "tree" ? loadStreetTree() : path.startsWith("car/") ? loadCarAsset(path.slice(4), renderer)
       : loader.loadAsync(`/models/${path}.glb`).then((gltf) => gltf.scene);
     const scene = await asset.catch((error: unknown) => {
       if (name === "traffic") return new THREE.Group();
@@ -556,17 +558,7 @@ export async function createParkingScene(host: HTMLDivElement, level: Level, sel
   const player = addVehicle(new THREE.Group(), playerModel.size.x, playerModel.size.z);
   player.add(playerModel.root);
   const wheelSuffix = vehicles[selection.id].asset.startsWith("traffic-pack") ? `_${selection.id}` : "";
-  const wheels = ["FL", "FR", "RL", "RR"].map((corner) => {
-    const pivot = player.getObjectByName(`wheel_${corner}${wheelSuffix}`);
-    return {
-      pivot, rest: pivot?.quaternion.clone(),
-      mesh: player.getObjectByName(`wheel_${corner}_mesh${wheelSuffix}`),
-      front: corner.startsWith("F"),
-    };
-  });
-  const wheelRadius = wheels[0].pivot?.getWorldPosition(new THREE.Vector3()).y || 0.31;
-  const wheelYaw = new THREE.Quaternion();
-  const up = new THREE.Vector3(0, 1, 0);
+  const updateWheels = createVehicleWheels(player, wheelSuffix);
   const cabin = createCabinCameras(renderer, scene);
   const frameFinish = material("#2f3832");
   const rearScreen = new THREE.MeshBasicMaterial({ map: cabin.picture });
@@ -621,7 +613,6 @@ export async function createParkingScene(host: HTMLDivElement, level: Level, sel
 
   let aspect = 1;
   let initialized = false;
-  let distance = 0;
   let slowFrames = 0;
   let previousState: DriveState | undefined;
   let previousMode: CameraMode = "Overview";
@@ -655,12 +646,7 @@ export async function createParkingScene(host: HTMLDivElement, level: Level, sel
     }
     player.position.set(state.x, 0, state.z);
     player.rotation.y = state.yaw;
-    distance = (distance + state.speed * dt / wheelRadius) % (Math.PI * 2);
-    wheelYaw.setFromAxisAngle(up, -state.steering * 0.48);
-    for (const { pivot, rest, mesh, front } of wheels) {
-      if (pivot && rest && front) pivot.quaternion.copy(rest).premultiply(wheelYaw);
-      if (mesh) mesh.rotation.x = distance;
-    }
+    updateWheels(state.speed * dt, state.steering);
     const marker = parkingMarkers[state.stopIndex];
     if (state.stopIndex !== markedStop) {
       parkingMarkers.forEach(({ lines, pad, label }, index) => {
