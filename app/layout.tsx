@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: "Parkline — 3D Parking Trials",
   description: "A precision parking game with live 3D driving and touch controls.",
 };
-
 export const viewport: Viewport = { themeColor: "#191c19", viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
