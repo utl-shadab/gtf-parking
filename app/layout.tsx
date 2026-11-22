@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#191c19", viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const localDemo = existsSync(join(process.cwd(), "public", "fonts", "game-paused-demo.otf"));
+  const localDemo = process.env.BUILD_TARGET !== "android"
+    && existsSync(join(process.cwd(), "public", "fonts", "game-paused-demo.otf"));
   // Built by `npm run android`; the install offer only appears once the APK exists.
   const apkPath = join(process.cwd(), "public", "download", "parkline.apk");
   const apk = existsSync(apkPath) ? { href: "/download/parkline.apk", size: statSync(apkPath).size } : null;

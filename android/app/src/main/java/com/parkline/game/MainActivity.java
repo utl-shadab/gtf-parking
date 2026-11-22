@@ -1,9 +1,11 @@
 package com.parkline.game;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
@@ -27,6 +29,13 @@ public class MainActivity extends BridgeActivity {
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+        if (hasWindowFocus()) hideSystemBars();
+        ViewCompat.requestApplyInsets(getWindow().getDecorView());
     }
 
     @Override

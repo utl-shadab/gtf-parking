@@ -31,4 +31,18 @@ npm start
 
 [Asset sources and licenses](public/credits.txt)
 
+## Android updates
+
+`npm run android` builds the APK in `public/download/parkline.apk`. Install version 1.1 once over the previous APK signed with the same Android key to keep local progress. It runs in fullscreen and follows Android's rotation setting.
+
+Publish web game changes as signed live updates. Choose a build number higher than all previous releases for this Android version:
+
+```sh
+npm run android:update -- 4
+```
+
+The command writes a signed ZIP and manifest to `android/app/build/outputs/live-updates/4`. Android packages use the bundled Lilita One font. On the signing machine, the private key defaults to `%LOCALAPPDATA%/Parkline/android-live-update-private.pem` on Windows. Set `PARKLINE_UPDATE_KEY_FILE` to use a private key stored elsewhere. Keep a secure backup of the key.
+
+Host both files as public assets of the GitHub release tagged `android-live`. For subsequent updates, upload the numbered ZIP first, then replace `parkline-android-v2.json` with the new manifest. The installed app checks this feed on startup, downloads in the background, and applies the update the next time it starts. Controls, models, maps, and other web game changes can use this channel. Changes to Android code or native plugins require a new APK and version code.
+
 For a personal build with the supplied Game Paused DEMO font, place the original OTF at `public/fonts/game-paused-demo.otf` before starting the server. The source archive uses Lilita One when the demo font is absent.

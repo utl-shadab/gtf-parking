@@ -8,6 +8,7 @@
     "start": "next start",
     "check": "tsc --noEmit",
     "android": "node scripts/build-android.mjs",
+    "android:update": "node scripts/build-android.mjs --update",
     "android:release": "node scripts/build-android.mjs --release"
   },
   "type": "module",
@@ -16,6 +17,7 @@
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.2",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capawesome/capacitor-live-update": "8.8.2",
     "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
